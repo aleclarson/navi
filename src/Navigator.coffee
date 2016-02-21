@@ -14,21 +14,21 @@ module.exports = Factory "Navigator",
 
     scenes: get: ->
       @_scenes.toJS()
-        .map (scene) -> scene.id
+        .map (scene) -> scene.name
 
     visibleScenes: get: ->
       @_scenes.toJS()
-        .filter (scene) -> scene.opacity.value > 0
-        .map (scene) -> scene.id
+        .filter (scene) -> not scene.isHidden
+        .map (scene) -> scene.name
 
   initValues: ->
-    _sceneIds: Object.create null
+    _sceneNames: Object.create null
 
   initReactiveValues: ->
     _scenes: Immutable.List()
 
   contains: (scene) ->
-    @_sceneIds[scene.id]?
+    @_sceneNames[scene.name]?
 
   insert: (scene) ->
 
@@ -51,7 +51,7 @@ module.exports = Factory "Navigator",
 
     @_scenes = @_scenes.splice index, 0, scene
 
-    @_sceneIds[scene.id] = yes
+    @_sceneNames[scene.name] = yes
 
     scene.navigator = this
 
@@ -68,7 +68,7 @@ module.exports = Factory "Navigator",
 
     @_scenes = @_scenes.splice index, 1
 
-    delete @_sceneIds[scene.id]
+    delete @_sceneNames[scene.name]
 
     scene.navigator = null
 

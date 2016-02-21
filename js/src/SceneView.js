@@ -19,6 +19,11 @@ module.exports = Component("SceneView", {
       }
     }
   },
+  initValues: function() {
+    return {
+      renderCount: 0
+    };
+  },
   initNativeValues: function() {
     return {
       opacity: (function(_this) {
@@ -59,17 +64,24 @@ module.exports = Component("SceneView", {
       })(this)
     };
   },
+  componentDidMount: function() {
+    return this.scene.sceneView = this;
+  },
+  componentWillUnmount: function() {
+    return this.scene.sceneView = null;
+  },
   render: function() {
     var bkg, content;
-    if (this.props.DEBUG) {
-      log.it("Scene(" + this.scene.id + ").render()");
+    if (this.renderCount > 0) {
+      log.it(this.scene.name + ".render() " + (this.renderCount + 1));
     }
+    this.renderCount += 1;
     bkg = View({
       pointerEvents: this.bkgEvents,
       onStartShouldSetResponder: emptyFunction.thatReturnsTrue,
       onResponderGrant: (function(_this) {
         return function() {
-          return log.it("Scene('" + _this.scene.id + "').onBkgTouch()");
+          return log.it(_this.scene.name + ".onTouch() { background: true }");
         };
       })(this),
       style: [_.Style.Clear, _.Style.Cover]
@@ -78,7 +90,7 @@ module.exports = Component("SceneView", {
       pointerEvents: this.contentEvents,
       onStartShouldSetResponderCapture: (function(_this) {
         return function() {
-          log.it("Scene('" + _this.scene.id + "').onTouch()");
+          log.it(_this.scene.name + ".onTouch()");
           return false;
         };
       })(this),

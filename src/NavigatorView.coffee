@@ -1,15 +1,16 @@
 
-{ Component, Style } = require "component"
+{ Component, Style, View, StaticRenderer } = require "component"
 
 reportFailure = require "report-failure"
 Reaction = require "reaction"
+{ sync } = require "io"
 
 Navigator = require "./Navigator"
 
 module.exports = Component "NavigatorView",
 
   propTypes:
-    navigator: Navigator
+    navigator: Navigator.Kind
     style: Style
 
   initState: ->
@@ -19,13 +20,12 @@ module.exports = Component "NavigatorView",
 
   render: ->
 
-    sceneViews = []
-
-    @state.scenes.forEach (scene) ->
-      try sceneView = scene.render { key: scene.id, scene }
-      catch error then reportFailure error, { scene }
-      sceneViews.push sceneView
+    scenes = sync.map @state.scenes.toJS(), (scene) ->
+      return StaticRenderer
+        key: scene.name
+        shouldUpdate: no
+        render: scene.render
 
     return View
       style: @props.style
-      children: sceneViews
+      children: scenes

@@ -14,15 +14,22 @@ module.exports = Factory("SceneList", {
       get: function() {
         return this._scenes;
       }
+    },
+    earlierScenes: {
+      get: function() {
+        return this._earlierScenes;
+      }
     }
   },
   initReactiveValues: function() {
     return {
       activeScene: null,
+      _earlierScenes: Immutable.List(),
       _scenes: Immutable.List()
     };
   },
   push: function(nextScene, makeActive) {
+    var previousScene;
     assertKind(nextScene, Scene);
     assertType(makeActive, Boolean);
     assert(makeActive || nextScene.isPermanent, {
@@ -31,7 +38,6 @@ module.exports = Factory("SceneList", {
       list: this
     });
     if (nextScene === this.activeScene) {
-      nextScene.isHiding = false;
       return;
     }
     if (!this.contains(nextScene)) {
@@ -44,9 +50,13 @@ module.exports = Factory("SceneList", {
       this._scenes = this._scenes.push(nextScene);
     }
     if (makeActive) {
-      nextScene._previousScene = this.activeScene;
-      nextScene.isHiding = false;
+      previousScene = this.activeScene;
+      if (previousScene != null) {
+        previousScene._onInactive(true);
+        this._earlierScenes = this._earlierScenes.push(previousScene);
+      }
       this.activeScene = nextScene;
+      nextScene._onActive(false);
     }
   },
   pop: function() {
@@ -55,17 +65,17 @@ module.exports = Factory("SceneList", {
       reason: "No active scene found.",
       list: this
     });
-    nextScene = this.activeScene._previousScene;
-    this.activeScene._previousScene = null;
+    this.activeScene._onInactive(false);
     if (!this.activeScene.isPermanent) {
       this.activeScene.list = null;
       activeIndex = this._scenes.indexOf(this.activeScene);
       this._scenes = this._scenes.splice(activeIndex, 1);
     }
+    nextScene = this._earlierScenes.last() || null;
+    this._earlierScenes = this._earlierScenes.pop();
+    this.activeScene = nextScene;
     if (nextScene != null) {
-      this.activeScene = nextScene;
-    } else {
-      this.activeScene = null;
+      nextScene._onActive(true);
     }
   },
   remove: function(scene) {
@@ -77,11 +87,13 @@ module.exports = Factory("SceneList", {
       return this.pop();
     }
     index = this.indexOf(scene);
-    if (index < 0) {
-      return;
+    if (0 <= (index = this.indexOf(scene))) {
+      scene.list = null;
+      this._scenes = this._scenes.splice(index, 1);
+      if (0 <= (index = this._earlierScenes.indexOf(scene))) {
+        this._earlierScenes = this._earlierScenes.splice(index, 1);
+      }
     }
-    this._scenes = this._scenes.splice(index, 1);
-    scene.list = null;
   },
   indexOf: function(scene) {
     assertKind(scene, Scene);

@@ -4,11 +4,11 @@
 
 Hideable = require "hideable"
 Factory = require "factory"
+Event = require "event"
 
 module.exports = Factory "Scene",
 
   optionTypes:
-    id: String
     level: Number
     isHiding: Boolean
     isHidden: Boolean
@@ -25,15 +25,27 @@ module.exports = Factory "Scene",
 
   customValues:
 
+    name: get: ->
+      @_getName()
+
+    sceneView:
+      value: null
+      reactive: yes
+      didSet: (sceneView) ->
+        GLOBAL.scenes[@name] = this # if __DEV__
+        @_didSetSceneView.call this, sceneView
+
     list:
       value: null
+      reactive: yes
       didSet: (list) ->
-        @didSetList list
+        @_didSetList.call this, list
 
     navigator:
       value: null
+      reactive: yes
       didSet: (navigator) ->
-        @didSetNavigator navigator
+        @_didSetNavigator.call this, navigator
 
     isActive: get: ->
       this is @list?.activeScene
@@ -48,21 +60,18 @@ module.exports = Factory "Scene",
     isTouchableBelow: get: ->
       not @ignoreTouchesBelow
 
-    render: lazy: ->
-      @getComponent()
+    _component: lazy: ->
+      @_getComponent()
 
   initFactory: ->
     GLOBAL.scenes = Object.create null # if __DEV__
 
   initFrozenValues: (options) ->
-    id: options.id
     level: options.level
     scale: NativeValue 1
 
   initValues: ->
-    list: null
-    navigator: null
-    _previousScene: null
+    _events: null
 
   initReactiveValues: (options) ->
     isHidden: options.isHidden
@@ -72,13 +81,26 @@ module.exports = Factory "Scene",
 
   init: (options) ->
 
-    GLOBAL.scenes[@id] = this # if __DEV__
-
     Hideable this, {
       isHiding: options.isHiding
-      @onShow
-      @onHide
+      show: => @_show.apply this, arguments
+      hide: => @_hide.apply this, arguments
+      onShowStart: => @_onShowStart.apply this, arguments
+      onShowEnd: => @_onShowEnd.apply this, arguments
+      onHideStart: => @_onHideStart.apply this, arguments
+      onHideEnd: => @_onHideEnd.apply this, arguments
     }
+
+  boundMethods: [
+    "render"
+  ]
+
+  render: (props = {}) ->
+    assertType props, Object
+    props.scene = this
+    try sceneView = @_component props
+    catch error then reportFailure error, { props }
+    sceneView
 
   isAbove: (scene) ->
 
@@ -93,17 +115,45 @@ module.exports = Factory "Scene",
     @list?.remove this
     @navigator?.remove this unless @list?
 
-  onShow: ->
-    # Subclass can override!
+  _show: ->
+    error = Error "Must override 'Scene._show'!"
+    reportFailure error, { scene: this }
 
-  onHide: ->
-    # Subclass can override!
+  _hide: ->
+    error = Error "Must override 'Scene._hide'!"
+    reportFailure error, { scene: this }
 
-  didSetNavigator: (navigator) ->
-    # Subclass can override!
+  _getName: ->
+    error = Error "Must override 'Scene._getName'!"
+    reportFailure error, { scene: this }
 
-  didSetList: (list) ->
-    # Subclass can override!
+  # Subclass can override!
+  _onShowStart: emptyFunction
 
-  getComponent: ->
-    throw Error "Subclass must override!"
+  # Subclass can override!
+  _onShowEnd: emptyFunction
+
+  # Subclass can override!
+  _onHideStart: emptyFunction
+
+  # Subclass can override!
+  _onHideEnd: emptyFunction
+
+  # Subclass can override!
+  _onActive: emptyFunction
+
+  # Subclass can override!
+  _onInactive: emptyFunction
+
+  # Subclass can override!
+  _didSetSceneView: emptyFunction
+
+  # Subclass can override!
+  _didSetList: emptyFunction
+
+  # Subclass can override!
+  _didSetNavigator: emptyFunction
+
+  _getComponent: ->
+    error = Error "Must override 'Scene._getComponent'!"
+    reportFailure error, { scene: this }

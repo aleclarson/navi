@@ -1,4 +1,4 @@
-var Factory, Hideable, Void, assert, ref;
+var Event, Factory, Hideable, Void, assert, ref;
 
 ref = require("type-utils"), Void = ref.Void, assert = ref.assert;
 
@@ -6,9 +6,10 @@ Hideable = require("hideable");
 
 Factory = require("factory");
 
+Event = require("event");
+
 module.exports = Factory("Scene", {
   optionTypes: {
-    id: String,
     level: Number,
     isHiding: Boolean,
     isHidden: Boolean,
@@ -24,16 +25,31 @@ module.exports = Factory("Scene", {
     ignoreTouchesBelow: false
   },
   customValues: {
+    name: {
+      get: function() {
+        return this._getName();
+      }
+    },
+    sceneView: {
+      value: null,
+      reactive: true,
+      didSet: function(sceneView) {
+        GLOBAL.scenes[this.name] = this;
+        return this._didSetSceneView.call(this, sceneView);
+      }
+    },
     list: {
       value: null,
+      reactive: true,
       didSet: function(list) {
-        return this.didSetList(list);
+        return this._didSetList.call(this, list);
       }
     },
     navigator: {
       value: null,
+      reactive: true,
       didSet: function(navigator) {
-        return this.didSetNavigator(navigator);
+        return this._didSetNavigator.call(this, navigator);
       }
     },
     isActive: {
@@ -64,9 +80,9 @@ module.exports = Factory("Scene", {
         return !this.ignoreTouchesBelow;
       }
     },
-    render: {
+    _component: {
       lazy: function() {
-        return this.getComponent();
+        return this._getComponent();
       }
     }
   },
@@ -75,16 +91,13 @@ module.exports = Factory("Scene", {
   },
   initFrozenValues: function(options) {
     return {
-      id: options.id,
       level: options.level,
       scale: NativeValue(1)
     };
   },
   initValues: function() {
     return {
-      list: null,
-      navigator: null,
-      _previousScene: null
+      _events: null
     };
   },
   initReactiveValues: function(options) {
@@ -96,12 +109,57 @@ module.exports = Factory("Scene", {
     };
   },
   init: function(options) {
-    GLOBAL.scenes[this.id] = this;
     return Hideable(this, {
       isHiding: options.isHiding,
-      onShow: this.onShow,
-      onHide: this.onHide
+      show: (function(_this) {
+        return function() {
+          return _this._show.apply(_this, arguments);
+        };
+      })(this),
+      hide: (function(_this) {
+        return function() {
+          return _this._hide.apply(_this, arguments);
+        };
+      })(this),
+      onShowStart: (function(_this) {
+        return function() {
+          return _this._onShowStart.apply(_this, arguments);
+        };
+      })(this),
+      onShowEnd: (function(_this) {
+        return function() {
+          return _this._onShowEnd.apply(_this, arguments);
+        };
+      })(this),
+      onHideStart: (function(_this) {
+        return function() {
+          return _this._onHideStart.apply(_this, arguments);
+        };
+      })(this),
+      onHideEnd: (function(_this) {
+        return function() {
+          return _this._onHideEnd.apply(_this, arguments);
+        };
+      })(this)
     });
+  },
+  boundMethods: ["render"],
+  render: function(props) {
+    var error, sceneView;
+    if (props == null) {
+      props = {};
+    }
+    assertType(props, Object);
+    props.scene = this;
+    try {
+      sceneView = this._component(props);
+    } catch (_error) {
+      error = _error;
+      reportFailure(error, {
+        props: props
+      });
+    }
+    return sceneView;
   },
   isAbove: function(scene) {
     var sceneIndex;
@@ -121,12 +179,42 @@ module.exports = Factory("Scene", {
       return (ref2 = this.navigator) != null ? ref2.remove(this) : void 0;
     }
   },
-  onShow: function() {},
-  onHide: function() {},
-  didSetNavigator: function(navigator) {},
-  didSetList: function(list) {},
-  getComponent: function() {
-    throw Error("Subclass must override!");
+  _show: function() {
+    var error;
+    error = Error("Must override 'Scene._show'!");
+    return reportFailure(error, {
+      scene: this
+    });
+  },
+  _hide: function() {
+    var error;
+    error = Error("Must override 'Scene._hide'!");
+    return reportFailure(error, {
+      scene: this
+    });
+  },
+  _getName: function() {
+    var error;
+    error = Error("Must override 'Scene._getName'!");
+    return reportFailure(error, {
+      scene: this
+    });
+  },
+  _onShowStart: emptyFunction,
+  _onShowEnd: emptyFunction,
+  _onHideStart: emptyFunction,
+  _onHideEnd: emptyFunction,
+  _onActive: emptyFunction,
+  _onInactive: emptyFunction,
+  _didSetSceneView: emptyFunction,
+  _didSetList: emptyFunction,
+  _didSetNavigator: emptyFunction,
+  _getComponent: function() {
+    var error;
+    error = Error("Must override 'Scene._getComponent'!");
+    return reportFailure(error, {
+      scene: this
+    });
   }
 });
 

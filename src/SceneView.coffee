@@ -19,6 +19,10 @@ module.exports = Component "SceneView",
     scene: get: ->
       @props.scene
 
+  initValues: ->
+
+    renderCount: 0
+
   initNativeValues: ->
 
     opacity: =>
@@ -37,16 +41,24 @@ module.exports = Component "SceneView",
 # Rendering
 #
 
+  componentDidMount: ->
+    @scene.sceneView = this
+
+  componentWillUnmount: ->
+    @scene.sceneView = null
+
   render: ->
 
-    if @props.DEBUG
-      log.it "Scene(#{@scene.id}).render()"
+    if @renderCount > 0
+      log.it "#{@scene.name}.render() #{@renderCount + 1}"
+
+    @renderCount += 1
 
     bkg = View
       pointerEvents: @bkgEvents
       onStartShouldSetResponder: emptyFunction.thatReturnsTrue
       onResponderGrant: =>
-        log.it "Scene('#{@scene.id}').onBkgTouch()" # if __DEV__
+        log.it "#{@scene.name}.onTouch() { background: true }" # if __DEV__
       style: [
         _.Style.Clear
         _.Style.Cover
@@ -55,7 +67,7 @@ module.exports = Component "SceneView",
     content = View
       pointerEvents: @contentEvents
       onStartShouldSetResponderCapture: =>
-        log.it "Scene('#{@scene.id}').onTouch()" # if __DEV__
+        log.it "#{@scene.name}.onTouch()" # if __DEV__
         no
       style: [
         _.Style.Clear

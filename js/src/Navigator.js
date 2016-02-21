@@ -17,23 +17,23 @@ module.exports = Factory("Navigator", {
     scenes: {
       get: function() {
         return this._scenes.toJS().map(function(scene) {
-          return scene.id;
+          return scene.name;
         });
       }
     },
     visibleScenes: {
       get: function() {
         return this._scenes.toJS().filter(function(scene) {
-          return scene.opacity.value > 0;
+          return !scene.isHidden;
         }).map(function(scene) {
-          return scene.id;
+          return scene.name;
         });
       }
     }
   },
   initValues: function() {
     return {
-      _sceneIds: Object.create(null)
+      _sceneNames: Object.create(null)
     };
   },
   initReactiveValues: function() {
@@ -42,7 +42,7 @@ module.exports = Factory("Navigator", {
     };
   },
   contains: function(scene) {
-    return this._sceneIds[scene.id] != null;
+    return this._sceneNames[scene.name] != null;
   },
   insert: function(scene) {
     var i, index, insertedScene, len, ref1, scenes;
@@ -70,7 +70,7 @@ module.exports = Factory("Navigator", {
       index += 1;
     }
     this._scenes = this._scenes.splice(index, 0, scene);
-    this._sceneIds[scene.id] = true;
+    this._sceneNames[scene.name] = true;
     scene.navigator = this;
     return true;
   },
@@ -82,7 +82,7 @@ module.exports = Factory("Navigator", {
     }
     index = this._scenes.indexOf(scene);
     this._scenes = this._scenes.splice(index, 1);
-    delete this._sceneIds[scene.id];
+    delete this._sceneNames[scene.name];
     scene.navigator = null;
     return true;
   },

@@ -15,9 +15,14 @@ module.exports = Factory "SceneList",
     scenes: get: ->
       @_scenes
 
+    earlierScenes: get: ->
+      @_earlierScenes
+
   initReactiveValues: ->
 
     activeScene: null
+
+    _earlierScenes: Immutable.List()
 
     _scenes: Immutable.List()
 
@@ -32,7 +37,6 @@ module.exports = Factory "SceneList",
       list: this
 
     if nextScene is @activeScene
-      nextScene.isHiding = no
       return
 
     unless @contains nextScene
@@ -46,9 +50,14 @@ module.exports = Factory "SceneList",
       @_scenes = @_scenes.push nextScene
 
     if makeActive
-      nextScene._previousScene = @activeScene
-      nextScene.isHiding = no
+
+      previousScene = @activeScene
+      if previousScene?
+        previousScene._onInactive yes
+        @_earlierScenes = @_earlierScenes.push previousScene
+
       @activeScene = nextScene
+      nextScene._onActive no
 
     return
 
@@ -58,20 +67,17 @@ module.exports = Factory "SceneList",
       reason: "No active scene found."
       list: this
 
-    nextScene = @activeScene._previousScene
-
-    @activeScene._previousScene = null
-
+    @activeScene._onInactive no
     unless @activeScene.isPermanent
       @activeScene.list = null
       activeIndex = @_scenes.indexOf @activeScene
       @_scenes = @_scenes.splice activeIndex, 1
 
-    if nextScene?
-      @activeScene = nextScene
+    nextScene = @_earlierScenes.last() or null
+    @_earlierScenes = @_earlierScenes.pop()
 
-    else
-      @activeScene = null
+    @activeScene = nextScene
+    nextScene?._onActive yes
 
     return
 
@@ -79,9 +85,11 @@ module.exports = Factory "SceneList",
     return unless @contains scene
     return @pop() if scene.isActive
     index = @indexOf scene
-    return if index < 0
-    @_scenes = @_scenes.splice index, 1
-    scene.list = null
+    if 0 <= (index = @indexOf scene)
+      scene.list = null
+      @_scenes = @_scenes.splice index, 1
+      if 0 <= (index = @_earlierScenes.indexOf scene)
+        @_earlierScenes = @_earlierScenes.splice index, 1
     return
 
   indexOf: (scene) ->

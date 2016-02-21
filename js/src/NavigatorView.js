@@ -1,16 +1,18 @@
-var Component, Navigator, Reaction, Style, ref, reportFailure;
+var Component, Navigator, Reaction, StaticRenderer, Style, View, ref, reportFailure, sync;
 
-ref = require("component"), Component = ref.Component, Style = ref.Style;
+ref = require("component"), Component = ref.Component, Style = ref.Style, View = ref.View, StaticRenderer = ref.StaticRenderer;
 
 reportFailure = require("report-failure");
 
 Reaction = require("reaction");
 
+sync = require("io").sync;
+
 Navigator = require("./Navigator");
 
 module.exports = Component("NavigatorView", {
   propTypes: {
-    navigator: Navigator,
+    navigator: Navigator.Kind,
     style: Style
   },
   initState: function() {
@@ -23,26 +25,17 @@ module.exports = Component("NavigatorView", {
     };
   },
   render: function() {
-    var sceneViews;
-    sceneViews = [];
-    this.state.scenes.forEach(function(scene) {
-      var error, sceneView;
-      try {
-        sceneView = scene.render({
-          key: scene.id,
-          scene: scene
-        });
-      } catch (_error) {
-        error = _error;
-        reportFailure(error, {
-          scene: scene
-        });
-      }
-      return sceneViews.push(sceneView);
+    var scenes;
+    scenes = sync.map(this.state.scenes.toJS(), function(scene) {
+      return StaticRenderer({
+        key: scene.name,
+        shouldUpdate: false,
+        render: scene.render
+      });
     });
     return View({
       style: this.props.style,
-      children: sceneViews
+      children: scenes
     });
   }
 });
