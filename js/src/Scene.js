@@ -1,12 +1,16 @@
-var Event, Factory, Hideable, Void, assert, ref;
+var Event, Factory, Hideable, Void, assert, ref, throwFailure;
 
 ref = require("type-utils"), Void = ref.Void, assert = ref.assert;
+
+throwFailure = require("failure").throwFailure;
 
 Hideable = require("hideable");
 
 Factory = require("factory");
 
 Event = require("event");
+
+GLOBAL.scenes = Object.create(null);
 
 module.exports = Factory("Scene", {
   optionTypes: {
@@ -25,16 +29,10 @@ module.exports = Factory("Scene", {
     ignoreTouchesBelow: false
   },
   customValues: {
-    name: {
-      get: function() {
-        return this._getName();
-      }
-    },
     sceneView: {
       value: null,
       reactive: true,
       didSet: function(sceneView) {
-        GLOBAL.scenes[this.name] = this;
         return this._didSetSceneView.call(this, sceneView);
       }
     },
@@ -86,18 +84,10 @@ module.exports = Factory("Scene", {
       }
     }
   },
-  initFactory: function() {
-    return GLOBAL.scenes = Object.create(null);
-  },
   initFrozenValues: function(options) {
     return {
       level: options.level,
       scale: NativeValue(1)
-    };
-  },
-  initValues: function() {
-    return {
-      _events: null
     };
   },
   initReactiveValues: function(options) {
@@ -109,6 +99,7 @@ module.exports = Factory("Scene", {
     };
   },
   init: function(options) {
+    global.scenes[this.__id] = this;
     return Hideable(this, {
       isHiding: options.isHiding,
       show: (function(_this) {
@@ -155,7 +146,7 @@ module.exports = Factory("Scene", {
       sceneView = this._component(props);
     } catch (_error) {
       error = _error;
-      reportFailure(error, {
+      throwFailure(error, {
         props: props
       });
     }
@@ -182,21 +173,14 @@ module.exports = Factory("Scene", {
   _show: function() {
     var error;
     error = Error("Must override 'Scene._show'!");
-    return reportFailure(error, {
+    return throwFailure(error, {
       scene: this
     });
   },
   _hide: function() {
     var error;
     error = Error("Must override 'Scene._hide'!");
-    return reportFailure(error, {
-      scene: this
-    });
-  },
-  _getName: function() {
-    var error;
-    error = Error("Must override 'Scene._getName'!");
-    return reportFailure(error, {
+    return throwFailure(error, {
       scene: this
     });
   },
@@ -212,7 +196,7 @@ module.exports = Factory("Scene", {
   _getComponent: function() {
     var error;
     error = Error("Must override 'Scene._getComponent'!");
-    return reportFailure(error, {
+    return throwFailure(error, {
       scene: this
     });
   }

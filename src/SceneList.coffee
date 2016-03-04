@@ -3,6 +3,8 @@
   assertKind
   assertType } = require "type-utils"
 
+{ throwFailure } = require "failure"
+
 Immutable = require "immutable"
 Factory = require "factory"
 
@@ -10,21 +12,45 @@ Scene = require "./Scene"
 
 module.exports = Factory "SceneList",
 
+  optionTypes:
+    getName: [ Function, Void ]
+
   customValues:
+
+    name: get: ->
+      @_getName?()
 
     scenes: get: ->
       @_scenes
 
+    sceneIds: get: ->
+      @_scenes.toJS()
+        .map (scene) -> scene.__id
+
     earlierScenes: get: ->
       @_earlierScenes
+
+    earlierSceneIds: get: ->
+      @_earlierScenes.toJS()
+        .map (scene) -> scene.__id
+
+  initFrozenValues: (options) ->
+
+    fakeError = Error()
+
+    _getName: options.getName
+
+    _getStack: ->
+      parse = require "parseErrorStack"
+      parse fakeError
 
   initReactiveValues: ->
 
     activeScene: null
 
-    _earlierScenes: Immutable.List()
-
     _scenes: Immutable.List()
+
+    _earlierScenes: Immutable.List()
 
   push: (nextScene, makeActive) ->
 
@@ -41,10 +67,9 @@ module.exports = Factory "SceneList",
 
     unless @contains nextScene
 
-      assert (not nextScene.list?),
-        reason: "Scene already belongs to another SceneList!"
-        scene: nextScene
-        list: this
+      if nextScene.list?
+        error = Error "Scene('#{nextScene.name}') already belongs to SceneList('#{nextScene.list.name}')!"
+        throwFailure error, { scene: nextScene, list: this }
 
       nextScene.list = this
       @_scenes = @_scenes.push nextScene

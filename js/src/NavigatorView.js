@@ -1,8 +1,6 @@
-var Component, Navigator, Reaction, StaticRenderer, Style, View, ref, reportFailure, sync;
+var Component, Navigator, Reaction, StaticRenderer, Style, View, ref, sync;
 
 ref = require("component"), Component = ref.Component, Style = ref.Style, View = ref.View, StaticRenderer = ref.StaticRenderer;
-
-reportFailure = require("report-failure");
 
 Reaction = require("reaction");
 
@@ -28,7 +26,7 @@ module.exports = Component("NavigatorView", {
     var scenes;
     scenes = sync.map(this.state.scenes.toJS(), function(scene) {
       return StaticRenderer({
-        key: scene.name,
+        key: scene.__id,
         shouldUpdate: false,
         render: scene.render
       });

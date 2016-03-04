@@ -14,26 +14,26 @@ Scene = require("./Scene");
 
 module.exports = Factory("Navigator", {
   customValues: {
-    scenes: {
+    sceneIds: {
       get: function() {
         return this._scenes.toJS().map(function(scene) {
-          return scene.name;
+          return scene.__id;
         });
       }
     },
-    visibleScenes: {
+    visibleSceneIds: {
       get: function() {
         return this._scenes.toJS().filter(function(scene) {
           return !scene.isHidden;
         }).map(function(scene) {
-          return scene.name;
+          return scene.__id;
         });
       }
     }
   },
   initValues: function() {
     return {
-      _sceneNames: Object.create(null)
+      _sceneIds: Object.create(null)
     };
   },
   initReactiveValues: function() {
@@ -42,7 +42,7 @@ module.exports = Factory("Navigator", {
     };
   },
   contains: function(scene) {
-    return this._sceneNames[scene.name] != null;
+    return this._sceneIds[scene.__id] != null;
   },
   insert: function(scene) {
     var i, index, insertedScene, len, ref1, scenes;
@@ -70,7 +70,7 @@ module.exports = Factory("Navigator", {
       index += 1;
     }
     this._scenes = this._scenes.splice(index, 0, scene);
-    this._sceneNames[scene.name] = true;
+    this._sceneIds[scene.__id] = true;
     scene.navigator = this;
     return true;
   },
@@ -82,7 +82,7 @@ module.exports = Factory("Navigator", {
     }
     index = this._scenes.indexOf(scene);
     this._scenes = this._scenes.splice(index, 1);
-    delete this._sceneNames[scene.name];
+    delete this._sceneIds[scene.__id];
     scene.navigator = null;
     return true;
   },

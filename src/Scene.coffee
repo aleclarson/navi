@@ -2,9 +2,13 @@
 { Void
   assert } = require "type-utils"
 
+{ throwFailure } = require "failure"
+
 Hideable = require "hideable"
 Factory = require "factory"
 Event = require "event"
+
+GLOBAL.scenes = Object.create null # if __DEV__
 
 module.exports = Factory "Scene",
 
@@ -25,14 +29,10 @@ module.exports = Factory "Scene",
 
   customValues:
 
-    name: get: ->
-      @_getName()
-
     sceneView:
       value: null
       reactive: yes
       didSet: (sceneView) ->
-        GLOBAL.scenes[@name] = this # if __DEV__
         @_didSetSceneView.call this, sceneView
 
     list:
@@ -63,15 +63,9 @@ module.exports = Factory "Scene",
     _component: lazy: ->
       @_getComponent()
 
-  initFactory: ->
-    GLOBAL.scenes = Object.create null # if __DEV__
-
   initFrozenValues: (options) ->
     level: options.level
     scale: NativeValue 1
-
-  initValues: ->
-    _events: null
 
   initReactiveValues: (options) ->
     isHidden: options.isHidden
@@ -80,6 +74,8 @@ module.exports = Factory "Scene",
     ignoreTouchesBelow: options.ignoreTouchesBelow
 
   init: (options) ->
+
+    global.scenes[@__id] = this # if __DEV__
 
     Hideable this, {
       isHiding: options.isHiding
@@ -99,7 +95,7 @@ module.exports = Factory "Scene",
     assertType props, Object
     props.scene = this
     try sceneView = @_component props
-    catch error then reportFailure error, { props }
+    catch error then throwFailure error, { props }
     sceneView
 
   isAbove: (scene) ->
@@ -117,15 +113,11 @@ module.exports = Factory "Scene",
 
   _show: ->
     error = Error "Must override 'Scene._show'!"
-    reportFailure error, { scene: this }
+    throwFailure error, { scene: this }
 
   _hide: ->
     error = Error "Must override 'Scene._hide'!"
-    reportFailure error, { scene: this }
-
-  _getName: ->
-    error = Error "Must override 'Scene._getName'!"
-    reportFailure error, { scene: this }
+    throwFailure error, { scene: this }
 
   # Subclass can override!
   _onShowStart: emptyFunction
@@ -156,4 +148,4 @@ module.exports = Factory "Scene",
 
   _getComponent: ->
     error = Error "Must override 'Scene._getComponent'!"
-    reportFailure error, { scene: this }
+    throwFailure error, { scene: this }

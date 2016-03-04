@@ -1,7 +1,6 @@
 
 { Component, Style, View, StaticRenderer } = require "component"
 
-reportFailure = require "report-failure"
 Reaction = require "reaction"
 { sync } = require "io"
 
@@ -22,7 +21,7 @@ module.exports = Component "NavigatorView",
 
     scenes = sync.map @state.scenes.toJS(), (scene) ->
       return StaticRenderer
-        key: scene.name
+        key: scene.__id
         shouldUpdate: no
         render: scene.render
 

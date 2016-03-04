@@ -50,15 +50,15 @@ module.exports = Component "SceneView",
   render: ->
 
     if @renderCount > 0
-      log.it "#{@scene.name}.render() #{@renderCount + 1}"
+      log.it "#{@scene.__id}.render() #{@renderCount + 1}"
 
     @renderCount += 1
 
     bkg = View
       pointerEvents: @bkgEvents
       onStartShouldSetResponder: emptyFunction.thatReturnsTrue
-      onResponderGrant: =>
-        log.it "#{@scene.name}.onTouch() { background: true }" # if __DEV__
+      # onResponderGrant: =>
+      #   log.it "#{@scene.__id}.onTouch() { background: true }" # if __DEV__
       style: [
         _.Style.Clear
         _.Style.Cover
@@ -66,9 +66,9 @@ module.exports = Component "SceneView",
 
     content = View
       pointerEvents: @contentEvents
-      onStartShouldSetResponderCapture: =>
-        log.it "#{@scene.name}.onTouch()" # if __DEV__
-        no
+      # onStartShouldSetResponderCapture: =>
+      #   log.it "#{@scene.__id}.onTouch()" # if __DEV__
+      #   no
       style: [
         _.Style.Clear
         _.Style.Cover

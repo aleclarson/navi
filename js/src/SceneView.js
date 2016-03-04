@@ -73,27 +73,16 @@ module.exports = Component("SceneView", {
   render: function() {
     var bkg, content;
     if (this.renderCount > 0) {
-      log.it(this.scene.name + ".render() " + (this.renderCount + 1));
+      log.it(this.scene.__id + ".render() " + (this.renderCount + 1));
     }
     this.renderCount += 1;
     bkg = View({
       pointerEvents: this.bkgEvents,
       onStartShouldSetResponder: emptyFunction.thatReturnsTrue,
-      onResponderGrant: (function(_this) {
-        return function() {
-          return log.it(_this.scene.name + ".onTouch() { background: true }");
-        };
-      })(this),
       style: [_.Style.Clear, _.Style.Cover]
     });
     content = View({
       pointerEvents: this.contentEvents,
-      onStartShouldSetResponderCapture: (function(_this) {
-        return function() {
-          log.it(_this.scene.name + ".onTouch()");
-          return false;
-        };
-      })(this),
       style: [
         _.Style.Clear, _.Style.Cover, this.props.style, {
           transform: [

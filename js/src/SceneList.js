@@ -1,6 +1,8 @@
-var Factory, Immutable, Scene, assert, assertKind, assertType, ref;
+var Factory, Immutable, Scene, assert, assertKind, assertType, ref, throwFailure;
 
 ref = require("type-utils"), assert = ref.assert, assertKind = ref.assertKind, assertType = ref.assertType;
+
+throwFailure = require("failure").throwFailure;
 
 Immutable = require("immutable");
 
@@ -9,27 +11,61 @@ Factory = require("factory");
 Scene = require("./Scene");
 
 module.exports = Factory("SceneList", {
+  optionTypes: {
+    getName: [Function, Void]
+  },
   customValues: {
+    name: {
+      get: function() {
+        return typeof this._getName === "function" ? this._getName() : void 0;
+      }
+    },
     scenes: {
       get: function() {
         return this._scenes;
+      }
+    },
+    sceneIds: {
+      get: function() {
+        return this._scenes.toJS().map(function(scene) {
+          return scene.__id;
+        });
       }
     },
     earlierScenes: {
       get: function() {
         return this._earlierScenes;
       }
+    },
+    earlierSceneIds: {
+      get: function() {
+        return this._earlierScenes.toJS().map(function(scene) {
+          return scene.__id;
+        });
+      }
     }
+  },
+  initFrozenValues: function(options) {
+    var fakeError;
+    fakeError = Error();
+    return {
+      _getName: options.getName,
+      _getStack: function() {
+        var parse;
+        parse = require("parseErrorStack");
+        return parse(fakeError);
+      }
+    };
   },
   initReactiveValues: function() {
     return {
       activeScene: null,
-      _earlierScenes: Immutable.List(),
-      _scenes: Immutable.List()
+      _scenes: Immutable.List(),
+      _earlierScenes: Immutable.List()
     };
   },
   push: function(nextScene, makeActive) {
-    var previousScene;
+    var error, previousScene;
     assertKind(nextScene, Scene);
     assertType(makeActive, Boolean);
     assert(makeActive || nextScene.isPermanent, {
@@ -41,11 +77,13 @@ module.exports = Factory("SceneList", {
       return;
     }
     if (!this.contains(nextScene)) {
-      assert(nextScene.list == null, {
-        reason: "Scene already belongs to another SceneList!",
-        scene: nextScene,
-        list: this
-      });
+      if (nextScene.list != null) {
+        error = Error("Scene('" + nextScene.name + "') already belongs to SceneList('" + nextScene.list.name + "')!");
+        throwFailure(error, {
+          scene: nextScene,
+          list: this
+        });
+      }
       nextScene.list = this;
       this._scenes = this._scenes.push(nextScene);
     }
