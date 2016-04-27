@@ -1,8 +1,5 @@
 
-{ assert
-  assertKind
-  assertType } = require "type-utils"
-
+{ assert, assertType } = require "type-utils"
 { throwFailure } = require "failure"
 
 Immutable = require "immutable"
@@ -13,7 +10,7 @@ Scene = require "./Scene"
 module.exports = Factory "SceneList",
 
   optionTypes:
-    getName: [ Function, Void ]
+    getName: Function.Maybe
 
   customValues:
 
@@ -54,7 +51,7 @@ module.exports = Factory "SceneList",
 
   push: (nextScene, makeActive) ->
 
-    assertKind nextScene, Scene
+    assertType nextScene, Scene.Kind
     assertType makeActive, Boolean
 
     assert (makeActive or nextScene.isPermanent),
@@ -76,10 +73,10 @@ module.exports = Factory "SceneList",
 
     if makeActive
 
-      previousScene = @activeScene
-      if previousScene?
-        previousScene._onInactive yes
-        @_earlierScenes = @_earlierScenes.push previousScene
+      earlierScene = @activeScene
+      if earlierScene?
+        earlierScene._onInactive yes
+        @_earlierScenes = @_earlierScenes.push earlierScene
 
       @activeScene = nextScene
       nextScene._onActive no
@@ -118,10 +115,10 @@ module.exports = Factory "SceneList",
     return
 
   indexOf: (scene) ->
-    assertKind scene, Scene
+    assertType scene, Scene.Kind
     return -1 unless @contains scene
     @_scenes.indexOf scene
 
   contains: (scene) ->
-    assertKind scene, Scene
+    assertType scene, Scene.Kind
     this is scene.list

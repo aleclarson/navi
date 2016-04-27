@@ -2,7 +2,6 @@
 { Component, Style, View, StaticRenderer } = require "component"
 
 Reaction = require "reaction"
-{ sync } = require "io"
 
 Navigator = require "./Navigator"
 
@@ -12,18 +11,25 @@ module.exports = Component "NavigatorView",
     navigator: Navigator.Kind
     style: Style
 
-  initState: ->
+  initValues: ->
 
     scenes: Reaction.sync =>
       @props.navigator._scenes
 
+  initListeners: ->
+
+    @scenes.didSet =>
+      @forceUpdate()
+
+  shouldComponentUpdate: ->
+    return no
+
   render: ->
 
-    scenes = sync.map @state.scenes.toJS(), (scene) ->
-      return StaticRenderer
-        key: scene.__id
-        shouldUpdate: no
-        render: scene.render
+    scenes = []
+    @scenes.value.forEach (scene) ->
+      scene._element ?= scene.render { key: scene.__id }
+      scenes.push scene._element
 
     return View
       style: @props.style

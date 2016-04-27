@@ -12,5 +12,10 @@
     "in-array": "^0.1.0",
     "reaction": "aleclarson/reaction#1.0.0",
     "type-utils": "aleclarson/type-utils#1.0.0"
+  },
+  "lotus": {
+    "plugins": [
+      "lotus-coffee"
+    ]
   }
 }

@@ -4,6 +4,8 @@
   Component } = require "component"
 
 emptyFunction = require "emptyFunction"
+flattenStyle = require "flattenStyle"
+Reaction = require "reaction"
 
 Scene = require "./Scene"
 
@@ -13,6 +15,7 @@ module.exports = Component "SceneView",
     scene: Scene.Kind
     style: Style
     children: Children
+    bkgStyle: Style
 
   customValues:
 
@@ -21,7 +24,7 @@ module.exports = Component "SceneView",
 
   initValues: ->
 
-    renderCount: 0
+    renderCount: 0 # TODO: if isDev
 
   initNativeValues: ->
 
@@ -31,10 +34,10 @@ module.exports = Component "SceneView",
     containerEvents: =>
       if @scene.isHiding or @scene.isHidden then "none" else "box-none"
 
-    contentEvents: =>
+    contentEvents: Reaction =>
       if @scene.isTouchable then "box-none" else "none"
 
-    bkgEvents: =>
+    bkgEvents: Reaction =>
       if @scene.isTouchableBelow then "none" else "auto"
 
 #
@@ -45,6 +48,7 @@ module.exports = Component "SceneView",
     @scene.sceneView = this
 
   componentWillUnmount: ->
+    @scene._element = null
     @scene.sceneView = null
 
   render: ->
@@ -55,38 +59,30 @@ module.exports = Component "SceneView",
     @renderCount += 1
 
     bkg = View
+      style: [ _.Style.Clear, _.Style.Cover, @props.bkgStyle ]
       pointerEvents: @bkgEvents
       onStartShouldSetResponder: emptyFunction.thatReturnsTrue
       # onResponderGrant: =>
       #   log.it "#{@scene.__id}.onTouch() { background: true }" # if __DEV__
-      style: [
-        _.Style.Clear
-        _.Style.Cover
-      ]
+
+    contentStyle = flattenStyle [
+      _.Style.Cover
+      _.Style.Clear
+      @props.style
+    ]
+
+    contentStyle.transform ?= []
+    contentStyle.transform.push { scale: @scene.scale }
 
     content = View
+      style: contentStyle
+      children: @props.children
       pointerEvents: @contentEvents
       # onStartShouldSetResponderCapture: =>
       #   log.it "#{@scene.__id}.onTouch()" # if __DEV__
       #   no
-      style: [
-        _.Style.Clear
-        _.Style.Cover
-        @props.style
-        transform: [
-          { scale: @scene.scale }
-        ]
-      ]
-      children: @props.children
 
     return View
+      style: [ _.Style.Clear, _.Style.Cover, { @opacity } ]
+      children: [ bkg, content ]
       pointerEvents: @containerEvents
-      style: [
-        _.Style.Clear
-        _.Style.Cover
-        { @opacity }
-      ]
-      children: [
-        bkg
-        content
-      ]

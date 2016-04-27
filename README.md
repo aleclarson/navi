@@ -7,4 +7,10 @@
 # TODO Add example!
 ```
 
-*More documentation at a later date!*
+#### SceneView
+
+Axioms about the `SceneView` include:
+
+- The wrapper view always uses `{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }`! This is important for uniform scaling.
+
+- The `style` prop is applied to the "child of the wrapper view" (a.k.a. the `contentView`).

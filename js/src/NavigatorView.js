@@ -1,10 +1,8 @@
-var Component, Navigator, Reaction, StaticRenderer, Style, View, ref, sync;
+var Component, Navigator, Reaction, StaticRenderer, Style, View, ref;
 
 ref = require("component"), Component = ref.Component, Style = ref.Style, View = ref.View, StaticRenderer = ref.StaticRenderer;
 
 Reaction = require("reaction");
-
-sync = require("io").sync;
 
 Navigator = require("./Navigator");
 
@@ -13,7 +11,7 @@ module.exports = Component("NavigatorView", {
     navigator: Navigator.Kind,
     style: Style
   },
-  initState: function() {
+  initValues: function() {
     return {
       scenes: Reaction.sync((function(_this) {
         return function() {
@@ -22,14 +20,26 @@ module.exports = Component("NavigatorView", {
       })(this))
     };
   },
+  initListeners: function() {
+    return this.scenes.didSet((function(_this) {
+      return function() {
+        return _this.forceUpdate();
+      };
+    })(this));
+  },
+  shouldComponentUpdate: function() {
+    return false;
+  },
   render: function() {
     var scenes;
-    scenes = sync.map(this.state.scenes.toJS(), function(scene) {
-      return StaticRenderer({
-        key: scene.__id,
-        shouldUpdate: false,
-        render: scene.render
-      });
+    scenes = [];
+    this.scenes.value.forEach(function(scene) {
+      if (scene._element == null) {
+        scene._element = scene.render({
+          key: scene.__id
+        });
+      }
+      return scenes.push(scene._element);
     });
     return View({
       style: this.props.style,

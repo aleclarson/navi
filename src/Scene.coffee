@@ -1,9 +1,8 @@
 
-{ Void
-  assert } = require "type-utils"
-
 { throwFailure } = require "failure"
+{ assert } = require "type-utils"
 
+emptyFunction = require "emptyFunction"
 Hideable = require "hideable"
 Factory = require "factory"
 Event = require "event"
@@ -14,20 +13,28 @@ module.exports = Factory "Scene",
 
   optionTypes:
     level: Number
-    isHiding: Boolean
     isHidden: Boolean
     isPermanent: Boolean
     ignoreTouches: Boolean
     ignoreTouchesBelow: Boolean
 
   optionDefaults:
-    isHiding: no
     isHidden: yes
     isPermanent: no
     ignoreTouches: no
     ignoreTouchesBelow: no
 
   customValues:
+
+    level:
+      get: -> @_level
+      set: (newLevel, oldLevel) ->
+        return if newLevel is oldLevel
+        @_level = newLevel
+        { navigator } = this
+        return unless navigator
+        navigator.remove this
+        navigator.insert this
 
     sceneView:
       value: null
@@ -64,28 +71,27 @@ module.exports = Factory "Scene",
       @_getComponent()
 
   initFrozenValues: (options) ->
-    level: options.level
+
     scale: NativeValue 1
 
+  initValues: ->
+
+    _cachedElement: null
+
   initReactiveValues: (options) ->
+
+    _level: options.level
+
     isHidden: options.isHidden
+
     isPermanent: options.isPermanent
+
     ignoreTouches: options.ignoreTouches
+
     ignoreTouchesBelow: options.ignoreTouchesBelow
 
   init: (options) ->
-
     global.scenes[@__id] = this # if __DEV__
-
-    Hideable this, {
-      isHiding: options.isHiding
-      show: => @_show.apply this, arguments
-      hide: => @_hide.apply this, arguments
-      onShowStart: => @_onShowStart.apply this, arguments
-      onShowEnd: => @_onShowEnd.apply this, arguments
-      onHideStart: => @_onHideStart.apply this, arguments
-      onHideEnd: => @_onHideEnd.apply this, arguments
-    }
 
   boundMethods: [
     "render"
@@ -110,26 +116,6 @@ module.exports = Factory "Scene",
   pop: ->
     @list?.remove this
     @navigator?.remove this unless @list?
-
-  _show: ->
-    error = Error "Must override 'Scene._show'!"
-    throwFailure error, { scene: this }
-
-  _hide: ->
-    error = Error "Must override 'Scene._hide'!"
-    throwFailure error, { scene: this }
-
-  # Subclass can override!
-  _onShowStart: emptyFunction
-
-  # Subclass can override!
-  _onShowEnd: emptyFunction
-
-  # Subclass can override!
-  _onHideStart: emptyFunction
-
-  # Subclass can override!
-  _onHideEnd: emptyFunction
 
   # Subclass can override!
   _onActive: emptyFunction

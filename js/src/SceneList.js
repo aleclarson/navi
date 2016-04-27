@@ -1,6 +1,6 @@
-var Factory, Immutable, Scene, assert, assertKind, assertType, ref, throwFailure;
+var Factory, Immutable, Scene, assert, assertType, ref, throwFailure;
 
-ref = require("type-utils"), assert = ref.assert, assertKind = ref.assertKind, assertType = ref.assertType;
+ref = require("type-utils"), assert = ref.assert, assertType = ref.assertType;
 
 throwFailure = require("failure").throwFailure;
 
@@ -12,7 +12,7 @@ Scene = require("./Scene");
 
 module.exports = Factory("SceneList", {
   optionTypes: {
-    getName: [Function, Void]
+    getName: Function.Maybe
   },
   customValues: {
     name: {
@@ -65,8 +65,8 @@ module.exports = Factory("SceneList", {
     };
   },
   push: function(nextScene, makeActive) {
-    var error, previousScene;
-    assertKind(nextScene, Scene);
+    var earlierScene, error;
+    assertType(nextScene, Scene.Kind);
     assertType(makeActive, Boolean);
     assert(makeActive || nextScene.isPermanent, {
       reason: "Only permanent scenes can be rendered without being made active.",
@@ -88,10 +88,10 @@ module.exports = Factory("SceneList", {
       this._scenes = this._scenes.push(nextScene);
     }
     if (makeActive) {
-      previousScene = this.activeScene;
-      if (previousScene != null) {
-        previousScene._onInactive(true);
-        this._earlierScenes = this._earlierScenes.push(previousScene);
+      earlierScene = this.activeScene;
+      if (earlierScene != null) {
+        earlierScene._onInactive(true);
+        this._earlierScenes = this._earlierScenes.push(earlierScene);
       }
       this.activeScene = nextScene;
       nextScene._onActive(false);
@@ -134,14 +134,14 @@ module.exports = Factory("SceneList", {
     }
   },
   indexOf: function(scene) {
-    assertKind(scene, Scene);
+    assertType(scene, Scene.Kind);
     if (!this.contains(scene)) {
       return -1;
     }
     return this._scenes.indexOf(scene);
   },
   contains: function(scene) {
-    assertKind(scene, Scene);
+    assertType(scene, Scene.Kind);
     return this === scene.list;
   }
 });

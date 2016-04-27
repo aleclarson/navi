@@ -1,6 +1,6 @@
-var Factory, Immutable, Scene, SceneList, assertKind, inArray, isType, ref;
+var Factory, Immutable, Scene, SceneList, assertType, inArray, isType, ref;
 
-ref = require("type-utils"), isType = ref.isType, assertKind = ref.assertKind;
+ref = require("type-utils"), isType = ref.isType, assertType = ref.assertType;
 
 Immutable = require("immutable");
 
@@ -54,7 +54,7 @@ module.exports = Factory("Navigator", {
       }
       return;
     }
-    assertKind(scene, Scene);
+    assertType(scene, Scene.Kind);
     if (this.contains(scene)) {
       return false;
     }
@@ -76,7 +76,7 @@ module.exports = Factory("Navigator", {
   },
   remove: function(scene) {
     var index;
-    assertKind(scene, Scene);
+    assertType(scene, Scene.Kind);
     if (!this.contains(scene)) {
       return false;
     }
@@ -88,7 +88,7 @@ module.exports = Factory("Navigator", {
   },
   searchBelow: function(target) {
     var scenes, validSceneLists;
-    assertKind(target, Scene);
+    assertType(target, Scene.Kind);
     validSceneLists = [null];
     if (target.list != null) {
       validSceneLists.push(target.list);

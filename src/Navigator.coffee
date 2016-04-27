@@ -1,5 +1,5 @@
 
-{ isType, assertKind } = require "type-utils"
+{ isType, assertType } = require "type-utils"
 
 Immutable = require "immutable"
 inArray = require "in-array"
@@ -36,7 +36,7 @@ module.exports = Factory "Navigator",
       @insert scene for scene in (scenes = scene)
       return
 
-    assertKind scene, Scene
+    assertType scene, Scene.Kind
 
     if @contains scene
       return no
@@ -59,7 +59,7 @@ module.exports = Factory "Navigator",
 
   remove: (scene) ->
 
-    assertKind scene, Scene
+    assertType scene, Scene.Kind
 
     unless @contains scene
       return no
@@ -76,7 +76,7 @@ module.exports = Factory "Navigator",
 
   searchBelow: (target) ->
 
-    assertKind target, Scene
+    assertType target, Scene.Kind
 
     validSceneLists = [ null ]
 

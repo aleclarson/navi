@@ -1,8 +1,10 @@
-var Event, Factory, Hideable, Void, assert, ref, throwFailure;
-
-ref = require("type-utils"), Void = ref.Void, assert = ref.assert;
+var Event, Factory, Hideable, assert, emptyFunction, throwFailure;
 
 throwFailure = require("failure").throwFailure;
+
+assert = require("type-utils").assert;
+
+emptyFunction = require("emptyFunction");
 
 Hideable = require("hideable");
 
@@ -15,20 +17,36 @@ GLOBAL.scenes = Object.create(null);
 module.exports = Factory("Scene", {
   optionTypes: {
     level: Number,
-    isHiding: Boolean,
     isHidden: Boolean,
     isPermanent: Boolean,
     ignoreTouches: Boolean,
     ignoreTouchesBelow: Boolean
   },
   optionDefaults: {
-    isHiding: false,
     isHidden: true,
     isPermanent: false,
     ignoreTouches: false,
     ignoreTouchesBelow: false
   },
   customValues: {
+    level: {
+      get: function() {
+        return this._level;
+      },
+      set: function(newLevel, oldLevel) {
+        var navigator;
+        if (newLevel === oldLevel) {
+          return;
+        }
+        this._level = newLevel;
+        navigator = this.navigator;
+        if (!navigator) {
+          return;
+        }
+        navigator.remove(this);
+        return navigator.insert(this);
+      }
+    },
     sceneView: {
       value: null,
       reactive: true,
@@ -52,8 +70,8 @@ module.exports = Factory("Scene", {
     },
     isActive: {
       get: function() {
-        var ref1;
-        return this === ((ref1 = this.list) != null ? ref1.activeScene : void 0);
+        var ref;
+        return this === ((ref = this.list) != null ? ref.activeScene : void 0);
       }
     },
     isTouchable: {
@@ -86,12 +104,17 @@ module.exports = Factory("Scene", {
   },
   initFrozenValues: function(options) {
     return {
-      level: options.level,
       scale: NativeValue(1)
+    };
+  },
+  initValues: function() {
+    return {
+      _cachedElement: null
     };
   },
   initReactiveValues: function(options) {
     return {
+      _level: options.level,
       isHidden: options.isHidden,
       isPermanent: options.isPermanent,
       ignoreTouches: options.ignoreTouches,
@@ -99,40 +122,7 @@ module.exports = Factory("Scene", {
     };
   },
   init: function(options) {
-    global.scenes[this.__id] = this;
-    return Hideable(this, {
-      isHiding: options.isHiding,
-      show: (function(_this) {
-        return function() {
-          return _this._show.apply(_this, arguments);
-        };
-      })(this),
-      hide: (function(_this) {
-        return function() {
-          return _this._hide.apply(_this, arguments);
-        };
-      })(this),
-      onShowStart: (function(_this) {
-        return function() {
-          return _this._onShowStart.apply(_this, arguments);
-        };
-      })(this),
-      onShowEnd: (function(_this) {
-        return function() {
-          return _this._onShowEnd.apply(_this, arguments);
-        };
-      })(this),
-      onHideStart: (function(_this) {
-        return function() {
-          return _this._onHideStart.apply(_this, arguments);
-        };
-      })(this),
-      onHideEnd: (function(_this) {
-        return function() {
-          return _this._onHideEnd.apply(_this, arguments);
-        };
-      })(this)
-    });
+    return global.scenes[this.__id] = this;
   },
   boundMethods: ["render"],
   render: function(props) {
@@ -162,32 +152,14 @@ module.exports = Factory("Scene", {
     return (sceneIndex < 0) || (sceneIndex < this.list.indexOf(this));
   },
   pop: function() {
-    var ref1, ref2;
-    if ((ref1 = this.list) != null) {
-      ref1.remove(this);
+    var ref, ref1;
+    if ((ref = this.list) != null) {
+      ref.remove(this);
     }
     if (this.list == null) {
-      return (ref2 = this.navigator) != null ? ref2.remove(this) : void 0;
+      return (ref1 = this.navigator) != null ? ref1.remove(this) : void 0;
     }
   },
-  _show: function() {
-    var error;
-    error = Error("Must override 'Scene._show'!");
-    return throwFailure(error, {
-      scene: this
-    });
-  },
-  _hide: function() {
-    var error;
-    error = Error("Must override 'Scene._hide'!");
-    return throwFailure(error, {
-      scene: this
-    });
-  },
-  _onShowStart: emptyFunction,
-  _onShowEnd: emptyFunction,
-  _onHideStart: emptyFunction,
-  _onHideEnd: emptyFunction,
   _onActive: emptyFunction,
   _onInactive: emptyFunction,
   _didSetSceneView: emptyFunction,
